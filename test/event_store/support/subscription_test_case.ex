@@ -417,7 +417,7 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         subscribers =
           for n <- 1..6 do
-            assert_receive {:events, subscriber, [%RecordedEvent{event_number: ^n}] = events}
+            assert_receive {:events, subscriber, [%RecordedEvent{event_number: _n, data: %{account_number: ^n}}] = events}
 
             :ok = Subscriber.ack(subscriber, events)
 
@@ -448,25 +448,25 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive {:subscribed, _subscription3}
 
         :ok = event_store.append_to_stream(event_store_meta, "stream0", 0, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+        :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(2, from: 3))
+        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 5))
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream0", 2, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 2, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 2, build_events(2))
+        :ok = event_store.append_to_stream(event_store_meta, "stream0", 2, build_events(2, from: 7))
+        :ok = event_store.append_to_stream(event_store_meta, "stream1", 2, build_events(2, from: 9))
+        :ok = event_store.append_to_stream(event_store_meta, "stream2", 2, build_events(2, from: 11))
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream0", 4, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 4, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 4, build_events(1))
+        :ok = event_store.append_to_stream(event_store_meta, "stream0", 4, build_events(1, from: 13))
+        :ok = event_store.append_to_stream(event_store_meta, "stream1", 4, build_events(1, from: 14))
+        :ok = event_store.append_to_stream(event_store_meta, "stream2", 4, build_events(1, from: 15))
 
         assert_receive {:events, subscriber1,
-                        [%RecordedEvent{event_number: 1, stream_id: "stream0"}] = events1}
+                        [%RecordedEvent{stream_id: "stream0", data: %{account_number:  1}}] = events1}
 
         assert_receive {:events, subscriber2,
-                        [%RecordedEvent{event_number: 3, stream_id: "stream1"}] = events2}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number:  3}}] = events2}
 
         assert_receive {:events, subscriber3,
-                        [%RecordedEvent{event_number: 5, stream_id: "stream2"}] = events3}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number:  5}}] = events3}
 
         refute_receive {:events, _subscriber, _received_events}
 
@@ -475,13 +475,13 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = Subscriber.ack(subscriber3, events3)
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 2, stream_id: "stream0"}] = events4}
+                        [%RecordedEvent{stream_id: "stream0", data: %{account_number:  2}}] = events4}
 
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 4, stream_id: "stream1"}] = events5}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number:  4}}] = events5}
 
         assert_receive {:events, ^subscriber3,
-                        [%RecordedEvent{event_number: 6, stream_id: "stream2"}] = events6}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number:  6}}] = events6}
 
         refute_receive {:events, _subscriber, _received_events}
 
@@ -490,13 +490,13 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = Subscriber.ack(subscriber3, events6)
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 7, stream_id: "stream0"}] = events7}
+                        [%RecordedEvent{stream_id: "stream0", data: %{account_number:  7}}] = events7}
 
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 9, stream_id: "stream1"}] = events8}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number:  9}}] = events8}
 
         assert_receive {:events, ^subscriber3,
-                        [%RecordedEvent{event_number: 11, stream_id: "stream2"}] = events9}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number:  11}}] = events9}
 
         refute_receive {:events, _subscriber, _received_events}
 
@@ -505,13 +505,13 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = Subscriber.ack(subscriber3, events9)
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 8, stream_id: "stream0"}] = events10}
+                        [%RecordedEvent{stream_id: "stream0", data: %{account_number:  8}}] = events10}
 
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 10, stream_id: "stream1"}] = events11}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number:  10}}] = events11}
 
         assert_receive {:events, ^subscriber3,
-                        [%RecordedEvent{event_number: 12, stream_id: "stream2"}] = events12}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number:  12}}] = events12}
 
         refute_receive {:events, _subscriber, _received_events}
 
@@ -520,13 +520,13 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = Subscriber.ack(subscriber3, events12)
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 13, stream_id: "stream0"}] = events13}
+                        [%RecordedEvent{stream_id: "stream0", data: %{account_number:  13}}] = events13}
 
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 14, stream_id: "stream1"}] = events14}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number:  14}}] = events14}
 
         assert_receive {:events, ^subscriber3,
-                        [%RecordedEvent{event_number: 15, stream_id: "stream2"}] = events15}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number:  15}}] = events15}
 
         refute_receive {:events, _subscriber, _received_events}
 
@@ -535,6 +535,10 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = Subscriber.ack(subscriber3, events15)
 
         refute_receive {:events, _subscriber, _received_events}
+
+        assert_event_numbers_monotonic(events1 ++ events4 ++ events7 ++ events10 ++ events13) 
+        assert_event_numbers_monotonic(events2 ++ events5 ++ events8 ++ events11 ++ events14) 
+        assert_event_numbers_monotonic(events3 ++ events6 ++ events9 ++ events12 ++ events15) 
       end
 
       test "should exclude stopped subscriber from receiving events", %{
@@ -553,24 +557,24 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(2))
 
         for n <- 1..2 do
-          assert_receive {:events, subscriber, [%RecordedEvent{event_number: ^n}] = events}
+          assert_receive {:events, subscriber, [%RecordedEvent{data: %{account_number: ^n}}] = events}
 
           :ok = Subscriber.ack(subscriber, events)
         end
 
         stop_subscriber(subscriber1)
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 3))
 
         for n <- 3..4 do
-          assert_receive {:events, ^subscriber2, [%RecordedEvent{event_number: ^n}] = events}
+          assert_receive {:events, ^subscriber2, [%RecordedEvent{data: %{account_number: ^n}}] = events}
 
           :ok = Subscriber.ack(subscriber2, events)
         end
 
         stop_subscriber(subscriber2)
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(2))
+        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(2, from: 5))
 
         refute_receive {:events, _subscriber, _received_events}
       end
@@ -718,19 +722,19 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         event_store_meta: event_store_meta
       } do
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(1))
+        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(1, from: 2))
 
         {:ok, subscriber1} = Subscriber.start_link(event_store, event_store_meta, self())
 
         assert_receive {:subscribed, _subscription}
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 1, stream_id: "stream1"}] = received_events}
+                        [%RecordedEvent{stream_id: "stream1", data: %{account_number: 1}}] = received_events}
 
         :ok = Subscriber.ack(subscriber1, received_events)
 
         assert_receive {:events, ^subscriber1,
-                        [%RecordedEvent{event_number: 2, stream_id: "stream2"}]}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number: 2}}]}
 
         stop_subscriber(subscriber1)
 
@@ -740,14 +744,14 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         # Receive event #2 again because it wasn't ack'd
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 2, stream_id: "stream2"}] = received_events}
+                        [%RecordedEvent{stream_id: "stream2", data: %{account_number: 2}}] = received_events}
 
         :ok = Subscriber.ack(subscriber2, received_events)
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(1))
+        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(1, from: 3))
 
         assert_receive {:events, ^subscriber2,
-                        [%RecordedEvent{event_number: 3, stream_id: "stream3"}] = received_events}
+                        [%RecordedEvent{stream_id: "stream3", data: %{account_number: 3}}] = received_events}
 
         :ok = Subscriber.ack(subscriber2, received_events)
 
