@@ -8,8 +8,9 @@ defmodule Commanded.EventStore.RecordedEvent do
 
     - `event_id` - a globally unique UUID to identify the event.
 
-    - `event_number` - a globally unique, monotonically incrementing and gapless
-      integer used to order the event amongst all events.
+    - `event_number` - a globally unique, monotonically incrementing
+      integer used to order the event amongst all events. May be gapless
+      depending on the underlying eventstore.
 
     - `stream_id` - the stream identity for the event.
 

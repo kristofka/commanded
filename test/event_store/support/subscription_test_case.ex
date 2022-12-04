@@ -31,7 +31,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         assert Enum.map(received_events, & &1.stream_version) == [1]
 
-        :ok = event_store.append_to_stream(event_store_meta, stream_uuid, 1, build_events(2))
+        :ok =
+          event_store.append_to_stream(event_store_meta, stream_uuid, 1, build_events(2, from: 2))
 
         received_events = assert_receive_events(event_store, event_store_meta, count: 2, from: 2)
 
@@ -42,7 +43,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         assert Enum.map(received_events, & &1.stream_version) == [2, 3]
 
-        :ok = event_store.append_to_stream(event_store_meta, stream_uuid, 3, build_events(3))
+        :ok =
+          event_store.append_to_stream(event_store_meta, stream_uuid, 3, build_events(3, from: 4))
 
         received_events = assert_receive_events(event_store, event_store_meta, count: 3, from: 4)
 
@@ -69,7 +71,12 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
           event_store.append_to_stream(event_store_meta, another_stream_uuid, 0, build_events(1))
 
         :ok =
-          event_store.append_to_stream(event_store_meta, another_stream_uuid, 1, build_events(2))
+          event_store.append_to_stream(
+            event_store_meta,
+            another_stream_uuid,
+            1,
+            build_events(2, from: 2)
+          )
 
         refute_receive {:events, _received_events}
       end
@@ -88,19 +95,22 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert Enum.map(received_events, & &1.stream_id) == ["stream1"]
         assert Enum.map(received_events, & &1.stream_version) == [1]
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
 
         received_events = assert_receive_events(event_store, event_store_meta, count: 2, from: 2)
         assert Enum.map(received_events, & &1.stream_id) == ["stream2", "stream2"]
         assert Enum.map(received_events, & &1.stream_version) == [1, 2]
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3, from: 4))
 
         received_events = assert_receive_events(event_store, event_store_meta, count: 3, from: 4)
         assert Enum.map(received_events, & &1.stream_id) == ["stream3", "stream3", "stream3"]
         assert Enum.map(received_events, & &1.stream_version) == [1, 2, 3]
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2, from: 7))
 
         received_events = assert_receive_events(event_store, event_store_meta, count: 2, from: 7)
         assert Enum.map(received_events, & &1.stream_id) == ["stream1", "stream1"]
@@ -131,8 +141,12 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive {:subscribed, ^subscription}
 
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 3, build_events(3))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2, from: 2))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream1", 3, build_events(3, from: 4))
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 1, from: 1)
         assert_receive_events(event_store, event_store_meta, subscription, count: 2, from: 2)
@@ -161,7 +175,9 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         event_store_meta: event_store_meta
       } do
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream1", 1, build_events(2, from: 2))
 
         wait_for_event_store()
 
@@ -178,7 +194,9 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive {:subscribed, ^subscription}
         refute_receive {:events, _events}
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream1", 3, build_events(3))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream1", 3, build_events(3, from: 4))
+
         :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(3))
         :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3))
 
@@ -201,8 +219,11 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 3, from: 1)
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 3, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 4, build_events(1))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 3, build_events(1, from: 4))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 4, build_events(1, from: 5))
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 2, from: 4)
         refute_receive {:events, _received_events}
@@ -248,8 +269,12 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive {:subscribed, ^subscription}
 
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3, from: 4))
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 1, from: 1)
         assert_receive_events(event_store, event_store_meta, subscription, count: 2, from: 2)
@@ -263,7 +288,9 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         event_store_meta: event_store_meta
       } do
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
 
         wait_for_event_store()
 
@@ -275,7 +302,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive_events(event_store, event_store_meta, subscription, count: 1, from: 1)
         assert_receive_events(event_store, event_store_meta, subscription, count: 2, from: 2)
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3, from: 4))
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 3, from: 4)
         refute_receive {:events, _received_events}
@@ -286,7 +314,9 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         event_store_meta: event_store_meta
       } do
         :ok = event_store.append_to_stream(event_store_meta, "stream1", 0, build_events(1))
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
 
         wait_for_event_store()
 
@@ -296,7 +326,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         assert_receive {:subscribed, ^subscription}
         refute_receive {:events, _received_events}
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream3", 0, build_events(3, from: 4))
 
         assert_receive_events(event_store, event_store_meta, subscription, count: 3, from: 4)
 
@@ -585,7 +616,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
         {:ok, subscription2} =
           event_store.subscribe_to(event_store_meta, :all, "subscriber", self(), :origin, [])
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
 
         assert_receive {:subscribed, ^subscription2}
         assert_receive_events(event_store, event_store_meta, subscription2, count: 2, from: 2)
@@ -625,7 +657,8 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
 
         :ok = event_store.delete_subscription(event_store_meta, :all, "subscriber")
 
-        :ok = event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2))
+        :ok =
+          event_store.append_to_stream(event_store_meta, "stream2", 0, build_events(2, from: 2))
 
         refute_receive {:events, _received_events}
 
@@ -820,8 +853,22 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
       received_events
       |> Enum.with_index(from_event_number)
       |> Enum.each(fn {received_event, expected_event_number} ->
-        assert received_event.event_number == expected_event_number
+        assert received_event.data.account_number == expected_event_number
       end)
+      assert_event_numbers_monotonic(received_events)
+    end
+
+    defp assert_event_numbers_monotonic(received_events) do
+      init_event_number = {true, -1, 0}
+
+      {assertion, prev, last} =
+        Enum.reduce_while(received_events, init_event_number, fn ev, {_a, p, _l} = _acc ->
+          if ev.event_number <= p,
+            do: {:halt, {false, p, ev.event_number}},
+            else: {:cont, {true, ev.event_number, ev.event_number}}
+        end)
+
+      assert(assertion, "event number : #{prev} received after event number : #{last}") 
     end
 
     defp build_event(account_number) do
@@ -834,8 +881,10 @@ defmodule Commanded.EventStore.SubscriptionTestCase do
       }
     end
 
-    defp build_events(count) do
-      for account_number <- 1..count, do: build_event(account_number)
+    defp build_events(count, opts \\ []) do
+      from = Keyword.get(opts, :from, 1)
+      count = count + (from - 1)
+      for account_number <- from..count, do: build_event(account_number)
     end
   end
 end

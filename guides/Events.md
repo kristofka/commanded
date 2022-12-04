@@ -105,7 +105,7 @@ In addition to the metadata key/values you provide, the following system values 
 - `handler_name` - the name of the event handler.
 - `state` - optional event handler state.
 - `event_id` - a globally unique UUID to identify the event.
-- `event_number` - a globally unique, monotonically incrementing and gapless integer used to order the event amongst all events.
+- `event_number` - a globally unique, monotonically incrementing integer used to order the event amongst all events. May additionally be gapless depending on the underlying eventstore.
 - `stream_id` - the stream identity for the event.
 - `stream_version` - the version of the stream for the event.
 - `causation_id` - an optional UUID identifier used to identify which command caused the event.
