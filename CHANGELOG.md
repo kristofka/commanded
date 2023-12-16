@@ -2,7 +2,13 @@
 
 ## Next release
 
+-  Use `Logger.warning` to fix deprecation warnings ([#542](https://github.com/commanded/commanded/pull/542)).
+
+## v1.4.2
+
 -  Record aggregate state while processing `Commanded.Aggregate.Multi` ([#507](https://github.com/commanded/commanded/pull/507)).
+- Properly handle EXIT signal in event handler ([#512](https://github.com/commanded/commanded/pull/512)).
+- Separate logging a process managers error ([#513](https://github.com/commanded/commanded/pull/513)).
 
 ## v1.4.1
 

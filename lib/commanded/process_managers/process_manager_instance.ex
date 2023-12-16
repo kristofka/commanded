@@ -272,7 +272,7 @@ defmodule Commanded.ProcessManagers.ProcessManagerInstance do
   end
 
   defp handle_event_error(
-         {:error, reason} = error,
+         {:error, _error} = error,
          %RecordedEvent{} = failed_event,
          %FailureContext{} = failure_context,
          %State{} = state
@@ -280,13 +280,7 @@ defmodule Commanded.ProcessManagers.ProcessManagerInstance do
     %RecordedEvent{data: data} = failed_event
     %State{idle_timeout: idle_timeout, process_manager_module: process_manager_module} = state
 
-    Logger.error(fn ->
-      describe(state) <>
-        " failed to handle event " <>
-        inspect(failed_event, pretty: true) <>
-        " due to: " <>
-        inspect(reason, pretty: true)
-    end)
+    log_event_error(error, failed_event, state)
 
     case process_manager_module.error(error, data, failure_context) do
       {:retry, %FailureContext{context: context}} when is_map(context) ->
@@ -332,18 +326,28 @@ defmodule Commanded.ProcessManagers.ProcessManagerInstance do
 
       {:stop, error} ->
         # Stop the process manager instance
-        Logger.warn(fn -> describe(state) <> " has requested to stop: #{inspect(error)}" end)
+        Logger.warning(fn -> describe(state) <> " has requested to stop: #{inspect(error)}" end)
 
         {:stop, error, state}
 
       invalid ->
-        Logger.warn(fn ->
+        Logger.warning(fn ->
           describe(state) <> " returned an invalid error response: #{inspect(invalid)}"
         end)
 
         # Stop process manager with original error
         {:stop, error, state}
     end
+  end
+
+  defp log_event_error({:error, reason}, %RecordedEvent{} = failed_event, %State{} = state) do
+    Logger.error(fn ->
+      describe(state) <>
+        " failed to handle event " <>
+        inspect(failed_event, pretty: true) <>
+        " due to: " <>
+        inspect(reason, pretty: true)
+    end)
   end
 
   defp handle_after_command([], %State{} = state) do
@@ -408,7 +412,7 @@ defmodule Commanded.ProcessManagers.ProcessManagerInstance do
         dispatch_commands(pending_commands, opts, state, last_event)
 
       {:error, _error} = error ->
-        Logger.warn(fn ->
+        Logger.warning(fn ->
           describe(state) <>
             " failed to dispatch command " <> inspect(command) <> " due to: " <> inspect(error)
         end)
@@ -504,12 +508,12 @@ defmodule Commanded.ProcessManagers.ProcessManagerInstance do
 
       {:stop, reason} = reply ->
         # Stop process manager
-        Logger.warn(fn -> describe(state) <> " has requested to stop: #{inspect(reason)}" end)
+        Logger.warning(fn -> describe(state) <> " has requested to stop: #{inspect(reason)}" end)
 
         reply
 
       invalid ->
-        Logger.warn(fn ->
+        Logger.warning(fn ->
           describe(state) <> " returned an invalid error response: #{inspect(invalid)}"
         end)
 
